@@ -1,0 +1,234 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: aws-integration
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+custom:
+  config_bucket: xledger
+  data_bucket: xledger-uploads
+  stage: dev
+
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  iamRoleStatements:
+  - Effect: Allow
+    Action:
+      - s3:PutObject
+      - s3:PutObjectAcl
+      - s3:GetObject
+      - s3:GetObjectAcl
+    Resource: "arn:aws:s3:::${self:custom.config_bucket}/*"
+
+  - Effect: Allow
+    Action:
+      - s3:PutObject
+      - s3:PutObjectAcl
+      - s3:GetObject
+      - s3:GetObjectAcl    
+    Resource: "arn:aws:s3:::${self:custom.data_bucket}/*"
+    
+  - Effect: Allow
+    Action:
+      - lambda:InvokeFunction
+    Resource: "*"
+
+# you can overwrite defaults here
+stage: ${self:custom.stage}
+region: us-east-1
+
+# you can add statements to the Lambda function's IAM Role here
+#  iamRoleStatements:
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:ListBucket"
+#      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+#    - Effect: "Allow"
+#      Action:
+#        - "s3:PutObject"
+#      Resource:
+#        Fn::Join:
+#          - ""
+#          - - "arn:aws:s3:::"
+#            - "Ref" : "ServerlessDeploymentBucket"
+#            - "/*"
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1
+
+# you can add packaging information here
+#package:
+#  include:
+#    - include-me.js
+#    - include-me-dir/**
+#  exclude:
+#    - exclude-me.js
+#    - exclude-me-dir/**
+
+plugins:
+  - serverless-offline
+
+functions:
+
+  # reads config and initiates building of product mapping tables
+  invoke_mapping_update: 
+    handler: src/InvokeMappingUpdate.handler
+    environment:
+      CONFIG_BUCKET: ${self:custom.config_bucket}
+      F_UPDATE_MAPPING: ${self:service}-${self:custom.stage}-update_product_mapping
+    events:  
+      # runs every day at 2:00am
+      - schedule: 
+          enabled: true
+          rate: cron(0 2 * * ? *)      
+          name: daily-update-mapping
+          description: 'Fetch products & groups from iiko and save a mapping file'
+
+  # reads config and initiates export procedure
+  invoke_export: 
+    handler: src/InvokeExport.handler
+    environment:
+      CONFIG_BUCKET: ${self:custom.config_bucket}
+      F_FETCH_ORDERS: ${self:service}-${self:custom.stage}-fetch_orders_from_iiko
+    events:  
+    # runs every day at 3:00am
+      - schedule: 
+          enabled: true
+          rate: cron(0 3 * * ? *)      
+          name: daily-export-orders
+          description: 'Export orders from previous day'
+
+  # authenticates in XLedger and saves auth key
+  xl_auth: 
+    handler: src/XledgerAuth.handler
+    environment: 
+      CONFIG_BUCKET: ${self:custom.config_bucket}
+    events:
+      # runs every day at 1:00am
+      - schedule: 
+          enabled: true
+          rate: cron(0 1 * * ? *)      
+          name: daily-xl-auth
+          description: 'Update XLedger auth token'      
+
+  # fetches products and groups from iiko and stores mapping file to S3
+  update_product_mapping:
+    handler: src/UpdateProductMapping.handler
+    environment:
+      CONFIG_BUCKET: ${self:custom.config_bucket}
+
+  # returns a table productId => groupName
+  # reads data from S3 (xledger/product_mapping), if not found, fetches from iiko and stores to S3   
+  read_product_mapping:
+    handler: src/ReadProductMapping.handler
+    environment: 
+      CONFIG_BUCKET: ${self:custom.config_bucket}
+  
+
+
+  # gets orders from iiko and puts them into files
+  fetch_orders_from_iiko:
+    handler: src/FetchOrdersFromIiko.handler
+    environment:
+      CONFIG_BUCKET: ${self:custom.config_bucket}
+      DATA_BUCKET: ${self:custom.data_bucket}
+
+  #watches S3 and triggers processing functions
+  s3_watcher: 
+    handler: src/S3Watcher.handler
+    environment:
+      CONFIG_BUCKET: ${self:custom.config_bucket}
+      DATA_BUCKET: ${self:custom.data_bucket}
+      F_CONVERT: ${self:service}-${self:custom.stage}-convert_to_xml
+      F_UPLOAD: ${self:service}-${self:custom.stage}-xl_upload
+    events:
+      - s3:
+          bucket: ${self:custom.data_bucket}
+          event: s3:ObjectCreated:*
+          existing: true  
+
+  #converts a file in S3 to XLedger XML format
+  convert_to_xml: 
+    handler: src/ConvertToXml.handler
+    environment:
+      CONFIG_BUCKET: ${self:custom.config_bucket}
+      DATA_BUCKET: ${self:custom.data_bucket}     
+      F_READ_MAPPING: ${self:service}-${self:custom.stage}-read_product_mapping
+
+  # grabs the converted file and uploads it to XLedger  
+  xl_upload:
+    handler: src/XLedgerUpload.handler
+    environment:
+      CONFIG_BUCKET: ${self:custom.config_bucket}
+      DATA_BUCKET: ${self:custom.data_bucket}
+
+#    The following are a few example events you can configure
+#    NOTE: Please make sure to change your handler code to work with those events
+#    Check the event documentation for details
+#    events:
+#      - http:
+#          path: users/create
+#          method: get
+#      - websocket: $connect
+#      - s3: ${env:BUCKET}
+#      - schedule: rate(10 minutes)
+#      - sns: greeter-topic
+#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
+#      - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx
+#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
+#      - iot:
+#          sql: "SELECT * FROM 'some_topic'"
+#      - cloudwatchEvent:
+#          event:
+#            source:
+#              - "aws.ec2"
+#            detail-type:
+#              - "EC2 Instance State-change Notification"
+#            detail:
+#              state:
+#                - pending
+#      - cloudwatchLog: '/aws/lambda/hello'
+#      - cognitoUserPool:
+#          pool: MyUserPool
+#          trigger: PreSignUp
+#      - alb:
+#          listenerArn: arn:aws:elasticloadbalancing:us-east-1:XXXXXX:listener/app/my-load-balancer/50dc6c495c0c9188/
+#          priority: 1
+#          conditions:
+#            host: example.com
+#            path: /hello
+
+#    Define function environment variables here
+#    environment:
+#      variable2: value2
+
+# you can add CloudFormation resource templates here
+#resources:
+#  Resources:
+#    NewResource:
+#      Type: AWS::S3::Bucket
+#      Properties:
+#        BucketName: my-new-config_bucket
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"

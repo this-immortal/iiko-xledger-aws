@@ -1,0 +1,21 @@
+{
+  "name": "iiko-xledger",
+  "version": "1.0.0",
+  "description": "This project is aimed at integrating iiko and xLedger",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "iiko",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "base-x": "^3.0.8",
+    "https-agent": "^1.0.0",
+    "jsontoxml": "^1.0.1"
+  },
+  "devDependencies": {
+    "aws-sdk": "^2.639.0",
+    "serverless-offline": "^5.12.1"
+  }
+}

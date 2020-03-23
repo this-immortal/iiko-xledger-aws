@@ -1,0 +1,47 @@
+{
+    "presets": [
+        {
+            "name": "abc_restaurants",
+            "iikoWeb": {
+                "url": "https://abc_restaurants.iikoweb.co.uk", 
+                "accountId": 125,
+                "user": "integration",
+                "password": "password"
+            },
+
+            "xLedger": {
+                "url": "https://wsdemo.xledger.net",
+                "username": "some@name.com",
+                "password": "12347-pwd",
+                "application": "XLEDGERDEMO"
+            },
+            "currencyCode": "GBP",            
+            "storeMapping": [
+                {
+                    "storeId": 1, 
+                    "storeCode": "001",
+                    "restaurantCode": 101, 
+                    "entityCode": 23001
+                },
+                {
+                    "storeId": 2, 
+                    "storeCode": "002",
+                    "restaurantCode": 102, 
+                    "entityCode": 23002
+                },
+                {
+                    "storeId": 3, 
+                    "storeCode": "003",
+                    "restaurantCode": 103, 
+                    "entityCode": 23003
+                },
+                {
+                    "storeId": 4, 
+                    "storeCode": "004",
+                    "restaurantCode": 104, 
+                    "entityCode": 23004
+                }                                 
+            ]
+        }
+    ]
+}
