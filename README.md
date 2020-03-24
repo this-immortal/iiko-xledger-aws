@@ -120,6 +120,8 @@ npm i serverless -g
 sls config credentials --provider aws --key YOUR_AWS_USER_KEY --secret YOUR_AWS_USER_SECRET
 ```
 
+If stuck, see this [video instruction](https://www.youtube.com/watch?v=KngM5bfpttA)
+
 ### Clone the repo
 
 Clone this repo to your machine and cd to the directory where you cloned it to.
