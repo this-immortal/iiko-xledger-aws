@@ -4,8 +4,6 @@ let configProvider = new ConfigProvider();
 const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 const axios = require("axios");
-const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-const bs64 = require('base-x')(BASE64);
 const https = require('https');
 
 module.exports.handler = async (event) => {
@@ -21,12 +19,20 @@ module.exports.handler = async (event) => {
         Key: params.filePath
     }).promise()).Body;
 
-    const result = await upload(preset, dataRes, params.filePath.split('/').pop());
-    return { error: result === null, message: result }
+    // extract entityCode from Order XML
+    const ecRE = new RegExp('<OwnerKey>(.*)</OwnerKey>');
+    const entityCode = dataRes.toString().match(ecRE)[1];
+    if (entityCode !== undefined) {
+        console.log('Extracted EntityCode from XML ', entityCode);
+        const result = await upload(preset, dataRes, params.filePath.split('/').pop(), entityCode);
+        return { error: result === null, message: result }
+    } else {
+        return { error: true, message: 'EntityCode not present in Order XML' }
+    }
 
 }
 
-let upload = async (preset, data, filename) => {
+let upload = async (preset, data, filename, entityCode) => {
 
     const key = await readLogonKey(preset.name);
     const cert = await readCertificate(preset.name);
@@ -44,14 +50,17 @@ let upload = async (preset, data, filename) => {
             '<sApplication>'  + preset.xLedger.application + '</sApplication>',
             '<sFileName>' + filename + '</sFileName>',
             // Base64-encoded XML
-            '<aFile>' + bs64.encode(data) + '</aFile>',
-            // some xLedger coe
-            '<sImportCode>lg11</sImportCode>',
-            '<iEntityCode>23601</iEntityCode>',
+            '<aFile>' + data.toString('base64') + '</aFile>',
+            // some xLedger code
+            '<sImportCode>LG11</sImportCode>',
+            // Entity code for the restaurant:
+            '<iEntityCode>' + entityCode + '</iEntityCode>',
             '</ReceiveFile>',
         '</soap12:Body>',
         '</soap12:Envelope>'
     ].join('');
+
+    console.log('Sending to XLedger:', payload);
 
     axios.defaults.headers.post['Content-Type'] = 'application/soap+xml; charset=utf-8';
     return axios.post(url, payload, { httpsAgent: agent })

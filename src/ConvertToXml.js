@@ -75,7 +75,7 @@ const convertOrderToXLedgerFormat = (iikoOrder, store, productMappinng) => {
 
     let orderHeader = {
         OwnerKey: store.entityCode,
-        OrderDate: new Date(iikoOrder.createdAt.date).toLocaleString('en-GB', { timeZone: 'UTC' }).split(',').join(''), // format: 01/03/2020 13:01:22 
+        OrderDate: new Date(iikoOrder.createdAt.date).toISOString('en-GB', { timeZone: 'UTC' }).split('T').join(' ').substring(0,19), // format: 2020-03-10 13:01:22 
         SubledgerCode: iikoOrder.shipment.supplier.code,
         CurrencyCode: 'GBP',
         ExtOrder: iikoOrder.draftNumber,
@@ -116,11 +116,11 @@ const convertOrderToXLedgerFormat = (iikoOrder, store, productMappinng) => {
 const objectToXml = (obj) => {
     console.log('ConvertToXML: creating XML');
     const start = ['<PurchaseOrders>\n   <PurchaseOrder>'];
-    const h = Object.keys(obj.header).map(x => ['      <', x, '>', obj.header[x], '<', x, '/>'].join('')).join('\n');
+    const h = Object.keys(obj.header).map(x => ['      <', x, '>', obj.header[x], '</', x, '>'].join('')).join('\n');
     const details = obj.details.map(
         item => [
             '      <PurchaseOrderDetails>', 
-            Object.keys(item).map(x => ['         <',x,'>',item[x],'<',x,'/>'].join('')).join('\n'), 
+            Object.keys(item).map(x => ['         <',x,'>',item[x],'</',x,'>'].join('')).join('\n'), 
             '      </PurchaseOrderDetails>'
         ].join('\n')
     ).join('\n');
