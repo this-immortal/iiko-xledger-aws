@@ -92,7 +92,7 @@ const createMapping = async (preset) => {
                     if (products.hasOwnProperty(id)) {
                         mapping[id] = {
                             product: products[id].name,
-                            group: products[id].group.name
+                            group: (products[id].group !== null && products[id].group !== undefined) ? products[id].group.name : 'UNDEFINED'
                         }
                     }
                 }
