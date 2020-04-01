@@ -5,6 +5,16 @@ let ConfigProvider = require('../config');
 let configProvider = new ConfigProvider();
 const lambda = new AWS.Lambda();
 
+if (!String.prototype.encodeHTML) {
+    String.prototype.encodeHTML = function () {
+      return this.replace(/&/g, '&amp;')
+                 .replace(/</g, '&lt;')
+                 .replace(/>/g, '&gt;')
+                 .replace(/"/g, '&quot;')
+                 .replace(/'/g, '&apos;');
+    };
+  }
+
 
 module.exports.handler = async (event) => {
 
@@ -95,8 +105,8 @@ const convertOrderToXLedgerFormat = (iikoOrder, store, productMappinng) => {
         } 
         return {
             LineNo: x.num,
-            ProductCode: groupName,
-            Text: [x.supplierProduct.code, x.supplierProduct.name, x.container.name].join(', '),
+            ProductCode: groupName.encodeHTML(),
+            Text: [x.supplierProduct.code, x.supplierProduct.name, x.container.name].join(', ').encodeHTML(),
             UnitKey: 3483,
             Quantity: x.receivedQuantity,
             UnitPrice: x.priceWithoutVat,

@@ -48,7 +48,7 @@ let upload = async (preset, data, filename, entityCode) => {
             '<sUserName>' + preset.xLedger.username + '</sUserName>',
             '<sKey>' + key + '</sKey>',
             '<sApplication>'  + preset.xLedger.application + '</sApplication>',
-            '<sFileName>' + filename + '</sFileName>',
+            '<sFileName>lg11_' + filename + '</sFileName>',
             // Base64-encoded XML
             '<aFile>' + data.toString('base64') + '</aFile>',
             // some xLedger code

@@ -49,7 +49,8 @@ const xlAuth = async (preset) => {
             if (r) {
                 console.log('Got key:', preset.name, r[1]);
                 await saveFile(preset.name, r[1]);
-            }
+                return true;
+            } 
             
             console.log('Error getting key:', preset.name);
             return null;

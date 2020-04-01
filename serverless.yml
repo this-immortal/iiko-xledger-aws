@@ -119,7 +119,7 @@ functions:
 
   # authenticates in XLedger and saves auth key
   xl_auth: 
-    handler: src/XledgerAuth.handler
+    handler: src/XLedgerAuth.handler
     environment: 
       CONFIG_BUCKET: ${self:custom.config_bucket}
     events:
