@@ -7,8 +7,8 @@ const lambda = new AWS.Lambda();
 module.exports.handler = async (event) => {
     console.log('InvokeExport: Invoking export');
     let cfg = await configProvider.getConfig();
-    let dateTo = makeYesterdayDateString();
-    let dateFrom = makeYesterdayDateString();
+    let dateTo = "yesterday";
+    let dateFrom = "today";
 
     if (event.dateFrom !== undefined) {
         dateFrom = event.dateFrom;
@@ -52,22 +52,3 @@ const invokeOrderFetcher = async (parameters) => {
   
       return lambda.invoke(params).promise();
 };
-
-/**
- * 
- */
-const makeYesterdayDateString = () => {
-    let d = new Date();
-    d.setDate(d.getDate() - 1); // Yesterday!
-    let
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear();
-
-    if (month.length < 2) 
-        month = '0' + month;
-    if (day.length < 2) 
-        day = '0' + day;
-
-    return [year, month, day].join('-');
-}
