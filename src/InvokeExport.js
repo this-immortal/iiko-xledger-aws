@@ -7,8 +7,8 @@ const lambda = new AWS.Lambda();
 module.exports.handler = async (event) => {
     console.log('InvokeExport: Invoking export');
     let cfg = await configProvider.getConfig();
-    let dateTo = "yesterday";
-    let dateFrom = "today";
+    let dateTo = "today";
+    let dateFrom = "yesterday";
 
     if (event.dateFrom !== undefined) {
         dateFrom = event.dateFrom;

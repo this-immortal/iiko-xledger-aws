@@ -11,11 +11,14 @@
   "dependencies": {
     "axios": "^0.19.2",
     "base-x": "^3.0.8",
+    "csv-parser": "^2.3.2",
     "https-agent": "^1.0.0",
-    "jsontoxml": "^1.0.1"
+    "jsontoxml": "^1.0.1",
+    "serverless-pseudo-parameters": "^2.5.0"
   },
   "devDependencies": {
-    "aws-sdk": "^2.639.0",
-    "serverless-offline": "^5.12.1"
+    "aws-sdk": "^2.686.0",
+    "serverless-offline": "^5.12.1",
+    "serverless-step-functions": "^2.19.0"
   }
 }

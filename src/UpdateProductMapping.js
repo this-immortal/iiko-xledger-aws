@@ -79,31 +79,42 @@ const createMapping = async (preset) => {
             password: preset.iikoWeb.password
         }, options);
         console.log('UpdateProductMapping: logged in as ' + response.data.user.name);
+        console.log('UpdateProductMapping: got cookies', response.headers["set-cookie"]);
         const cookie = response.headers["set-cookie"][0]; // get cookie from request
-        axios.defaults.headers.Cookie = cookie;
+        //axios.defaults.headers.Cookie = cookie;
+        options.headers.Cookie = cookie;
 
         // Fetching Products and Product Groups
-        const mapping = axios.get(url + '/api/inventory/purchasing/export/product_groups', options).then((res) => {
-            if (!res.data.error) {
-                let products = res.data.data;
-                let mapping = {}
-                console.log('UpdateProductMapping: fetched ' + Object.keys(products).length + ' products')
-                for (let id in products) {
-                    if (products.hasOwnProperty(id)) {
-                        mapping[id] = {
-                            product: products[id].name,
-                            group: (products[id].group !== null && products[id].group !== undefined) ? products[id].group.name : 'UNDEFINED'
+        const mapping = axios.get(url + '/api/inventory/purchasing/export/product_groups', options).then(
+            // request succeeded
+            (res) => {
+                if (!res.data.error) {
+                    let products = res.data.data;
+                    let mapping = {}
+                    console.log('UpdateProductMapping: fetched ' + Object.keys(products).length + ' products')
+                    for (let id in products) {
+                        if (products.hasOwnProperty(id)) {
+                            mapping[id] = {
+                                product: products[id].name,
+                                group: (products[id].group !== null && products[id].group !== undefined) ? products[id].group.name : 'UNDEFINED'
+                            }
                         }
                     }
+
+                    return mapping;
+
+                } else {
+                    console.log('UpdateProductMapping: error fetching product groups');
+                    return null;
                 }
-
-                return mapping;
-
-            } else {
+            },
+            // request rejected
+            (res) => {
+                console.log('UpdateProductMapping: request to iiko failed', res);
                 console.log('UpdateProductMapping: error fetching product groups');
                 return null;
             }
-        });
+        );
 
         // logging out
         await axios.get(preset.iikoWeb.url+'/api/auth/logout', options);

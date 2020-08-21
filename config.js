@@ -6,7 +6,7 @@ const s3 = new AWS.S3();
 class ConfigProvider {
 
     getConfig = async () => {
-        console.log('Rading config');
+        console.log('Config: Rading config file', { bucket: process.env.CONFIG_BUCKET, file: 'export_config.json' });
 
         let data = await s3.getObject({
             Bucket: process.env.CONFIG_BUCKET,
